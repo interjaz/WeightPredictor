@@ -15,7 +15,11 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+        maven { url "https://jitpack.io" }
     }
+
+    ext.versionCode = 1
+    ext.versionName = "0.1.0"
 }
 
 task clean(type: Delete) {
