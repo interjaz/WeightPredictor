@@ -1,9 +1,7 @@
-package app.android.weightpredictor;
+package app.android.weightpredictor.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -13,21 +11,21 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import java.text.ParseException;
-import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import app.android.weightpredictor.R;
+
 public class AddWeightActivity extends AppCompatActivity {
 
-    public static final int GET_DATE = 1;
-    public static final int GET_TIME = 2;
+    public static final int REQUEST_DATE = 1;
+    public static final int REQUEST_TIME = 2;
 
-    public static final int SUCCESS = 1;
+    public static final int RESPONSE_SUCCESS = 1;
 
     public static final String DATA_WEIGHT = "DATA_WEIGHT";
     public static final String DATA_DATE = "DATA_DATE";
-    public static final String DATA_TIME = "DATA_TIME";
 
     public static final String FORMAT_DATE = "yyyy/MM/dd HH:mm";
 
@@ -59,7 +57,7 @@ public class AddWeightActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(AddWeightActivity.this, DateActivity.class);
-                startActivityForResult(intent, AddWeightActivity.GET_DATE);
+                startActivityForResult(intent, AddWeightActivity.REQUEST_DATE);
             }
         });
 
@@ -68,7 +66,7 @@ public class AddWeightActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(AddWeightActivity.this, TimeActivity.class);
-                startActivityForResult(intent, AddWeightActivity.GET_TIME);
+                startActivityForResult(intent, AddWeightActivity.REQUEST_TIME);
             }
         });
 
@@ -125,7 +123,7 @@ public class AddWeightActivity extends AppCompatActivity {
 
             String strDateData = mDateFormatData.format(date);
             intent.putExtra(AddWeightActivity.DATA_DATE, strDateData);
-            setResult(AddWeightActivity.SUCCESS, intent);
+            setResult(AddWeightActivity.RESPONSE_SUCCESS, intent);
         }
         catch(ParseException ex){
 
@@ -136,7 +134,7 @@ public class AddWeightActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if(requestCode == AddWeightActivity.GET_DATE && resultCode == DateActivity.SUCCESS) {
+        if(requestCode == AddWeightActivity.REQUEST_DATE && resultCode == DateActivity.RESPONSE_SUCCESS) {
             String strDate = data.getStringExtra(DateActivity.DATA);
             SimpleDateFormat parseFormat = new SimpleDateFormat(DateActivity.FORMAT_DATE);
 
@@ -148,7 +146,7 @@ public class AddWeightActivity extends AppCompatActivity {
             }
         }
 
-        if(requestCode == AddWeightActivity.GET_TIME && resultCode == TimeActivity.SUCCESS) {
+        if(requestCode == AddWeightActivity.REQUEST_TIME && resultCode == TimeActivity.RESPONSE_SUCCESS) {
             String time = data.getStringExtra(TimeActivity.DATA);
             mBtnTime.setText(time);
         }

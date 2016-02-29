@@ -1,4 +1,4 @@
-package app.android.weightpredictor;
+package app.android.weightpredictor.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,13 +12,15 @@ import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 
 import java.text.SimpleDateFormat;
 
+import app.android.weightpredictor.R;
+
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
 public class DateActivity extends AppCompatActivity {
 
-    public static final int SUCCESS = 1;
+    public static final int RESPONSE_SUCCESS = 1;
     public static final String DATA = "DATA";
     public static final String FORMAT_DATE = "yyyy/MM/dd";
 
@@ -48,7 +50,7 @@ public class DateActivity extends AppCompatActivity {
                 String date = dateFormat.format(selectedDate.getDate());
                 intent.putExtra(DateActivity.DATA, date);
 
-                DateActivity.this.setResult(DateActivity.SUCCESS, intent);
+                DateActivity.this.setResult(DateActivity.RESPONSE_SUCCESS, intent);
                 DateActivity.this.finish();
             }
         });

@@ -1,12 +1,9 @@
-package app.android.weightpredictor;
+package app.android.weightpredictor.ui;
 
 import android.content.Intent;
-import android.net.Uri;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -14,13 +11,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 
-import com.google.android.gms.wearable.DataItem;
-
 import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
+import app.android.weightpredictor.R;
+import app.android.weightpredictor.database.SqliteUpdater;
+import app.android.weightpredictor.entity.WeightEntry;
+import app.android.weightpredictor.repository.IRepository;
+import app.android.weightpredictor.repository.SqliteRepositoryFactory;
 import lecho.lib.hellocharts.model.Axis;
 import lecho.lib.hellocharts.model.AxisValue;
 import lecho.lib.hellocharts.model.Line;
@@ -30,7 +31,12 @@ import lecho.lib.hellocharts.view.LineChartView;
 
 public class MainActivity extends AppCompatActivity  {
 
+    private static final int REQUEST_WEIGHT = 1;
+
     private LineChartView mLineChart;
+
+    private SqliteRepositoryFactory mRepositoryFactory;
+    private IRepository<WeightEntry> mWeightEntryRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +51,7 @@ public class MainActivity extends AppCompatActivity  {
             public void onClick(View view) {
 
                 Intent intent = new Intent(MainActivity.this, AddWeightActivity.class);
-                startActivityForResult(intent, 0);
+                startActivityForResult(intent, MainActivity.REQUEST_WEIGHT);
 
             }
         });
@@ -105,6 +111,12 @@ public class MainActivity extends AppCompatActivity  {
         mLineChart.setLineChartData(lineChartData);
         mLineChart.startDataAnimation();
         mLineChart.invalidate();
+
+        SqliteUpdater.update(this, "db", 0, Environment.getExternalStorageState() + "/weight-predictor");
+
+        mRepositoryFactory = new SqliteRepositoryFactory("db", 0, Environment.getExternalStorageState() + "/weight-predictor");
+        mWeightEntryRepository = mRepositoryFactory.Create(this, WeightEntry.class);
+        List<WeightEntry> list = mWeightEntryRepository.get();
     }
 
 
@@ -130,4 +142,32 @@ public class MainActivity extends AppCompatActivity  {
         return super.onOptionsItemSelected(item);
     }
 
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == MainActivity.REQUEST_WEIGHT && resultCode == AddWeightActivity.RESPONSE_SUCCESS) {
+
+
+            try {
+                String strDate = data.getStringExtra(AddWeightActivity.DATA_DATE);
+                SimpleDateFormat parseFormat = new SimpleDateFormat(AddWeightActivity.FORMAT_DATE);
+
+                double weight = data.getDoubleExtra(AddWeightActivity.DATA_WEIGHT, 0);
+                java.util.Date date = parseFormat.parse(strDate);
+
+                WeightEntry weightEntry = new WeightEntry();
+                weightEntry.setDate(date);
+                weightEntry.setWeight(weight);
+                weightEntry.setWeigthEntryId(UUID.randomUUID().toString());
+
+                mWeightEntryRepository.insert(weightEntry);
+
+            } catch (Exception e) {
+
+            }
+        }
+
+    }
 }
