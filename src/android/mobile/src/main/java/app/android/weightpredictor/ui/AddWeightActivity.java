@@ -92,10 +92,12 @@ public class AddWeightActivity extends AppCompatActivity {
         if (id == R.id.action_save) {
             saveResult();
             finish();
+            return true;
         }
 
         if(id == android.R.id.home) {
             finish();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -106,8 +108,8 @@ public class AddWeightActivity extends AppCompatActivity {
             Intent intent = new Intent();
 
             String strWeight = mTxtWeight.getText().toString();
-            int intWeight = Integer.parseInt(strWeight);
-            intent.putExtra(AddWeightActivity.DATA_WEIGHT, intWeight);
+            double doubleWeight = Double.parseDouble(strWeight);
+            intent.putExtra(AddWeightActivity.DATA_WEIGHT, doubleWeight);
 
             Calendar calendar = Calendar.getInstance();
             String strDateUi = mBtnDate.getText().toString();
@@ -140,7 +142,7 @@ public class AddWeightActivity extends AppCompatActivity {
 
             try {
                 Date date = parseFormat.parse(strDate);
-                mBtnDate.setText(mDateFormatData.format(date));
+                mBtnDate.setText(mDateFormatUi.format(date));
             } catch (ParseException e) {
 
             }

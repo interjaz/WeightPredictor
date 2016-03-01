@@ -112,9 +112,9 @@ public class MainActivity extends AppCompatActivity  {
         mLineChart.startDataAnimation();
         mLineChart.invalidate();
 
-        SqliteUpdater.update(this, "db", 0, Environment.getExternalStorageState() + "/weight-predictor");
+        SqliteUpdater.update(this, "db", 0, Environment.getExternalStorageDirectory() + "/weight-predictor");
 
-        mRepositoryFactory = new SqliteRepositoryFactory("db", 0, Environment.getExternalStorageState() + "/weight-predictor");
+        mRepositoryFactory = new SqliteRepositoryFactory("db", 0, Environment.getExternalStorageDirectory() + "/weight-predictor");
         mWeightEntryRepository = mRepositoryFactory.Create(this, WeightEntry.class);
         List<WeightEntry> list = mWeightEntryRepository.get();
     }
