@@ -90,6 +90,11 @@ public class AddWeightActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_save) {
+            if(mTxtWeight.getText().toString().equals("")) {
+                mTxtWeight.setError("Please provide weight");
+                return true;
+            }
+
             saveResult();
             finish();
             return true;
@@ -117,13 +122,15 @@ public class AddWeightActivity extends AppCompatActivity {
             Date date = mDateFormatUi.parse(strDateUi);
             Date time = mTimeFormatUi.parse(strTimeUi);
             calendar.setTime(time);
-            int hours = calendar.get(Calendar.HOUR);
+            int hours = calendar.get(Calendar.HOUR_OF_DAY);
             int minutes = calendar.get(Calendar.MINUTE);
             calendar.setTime(date);
-            calendar.add(Calendar.HOUR, hours);
+            calendar.add(Calendar.HOUR_OF_DAY, hours);
             calendar.add(Calendar.MINUTE, minutes);
 
-            String strDateData = mDateFormatData.format(date);
+            Date dateTime = calendar.getTime();
+
+            String strDateData = mDateFormatData.format(dateTime);
             intent.putExtra(AddWeightActivity.DATA_DATE, strDateData);
             setResult(AddWeightActivity.RESPONSE_SUCCESS, intent);
         }

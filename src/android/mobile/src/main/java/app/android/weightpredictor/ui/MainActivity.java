@@ -1,6 +1,7 @@
 package app.android.weightpredictor.ui;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
@@ -9,17 +10,23 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ListView;
 
 
-import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import app.android.weightpredictor.R;
+import app.android.weightpredictor.ViewModels.WeightEntryViewModel;
+import app.android.weightpredictor.adapters.WeightEntryAdapter;
 import app.android.weightpredictor.database.SqliteUpdater;
 import app.android.weightpredictor.entity.WeightEntry;
+import app.android.weightpredictor.helpers.Helper;
 import app.android.weightpredictor.repository.IRepository;
 import app.android.weightpredictor.repository.SqliteRepositoryFactory;
 import lecho.lib.hellocharts.model.Axis;
@@ -27,6 +34,7 @@ import lecho.lib.hellocharts.model.AxisValue;
 import lecho.lib.hellocharts.model.Line;
 import lecho.lib.hellocharts.model.LineChartData;
 import lecho.lib.hellocharts.model.PointValue;
+import lecho.lib.hellocharts.model.Viewport;
 import lecho.lib.hellocharts.view.LineChartView;
 
 public class MainActivity extends AppCompatActivity  {
@@ -37,6 +45,14 @@ public class MainActivity extends AppCompatActivity  {
 
     private SqliteRepositoryFactory mRepositoryFactory;
     private IRepository<WeightEntry> mWeightEntryRepository;
+    private WeightEntryAdapter mWeightEntryAdapter;
+
+    private SimpleDateFormat mSimpleDateFormat;
+    private SimpleDateFormat mSimpleTimeFormat;
+
+
+    private static final String FORMAT_DATE_UI = "dd MMMM yyyy";
+    private static final String FORMAT_TIME_UI = "HH:mm";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,49 +74,92 @@ public class MainActivity extends AppCompatActivity  {
 
         mLineChart = (LineChartView)findViewById(R.id.main_chProgress);
 
+
+
+        SqliteUpdater.update(this, "db", 0, Environment.getExternalStorageDirectory() + "/weight-predictor");
+
+        mRepositoryFactory = new SqliteRepositoryFactory("db", 0, Environment.getExternalStorageDirectory() + "/weight-predictor");
+
+        mSimpleDateFormat = new SimpleDateFormat(MainActivity.FORMAT_DATE_UI);
+        mSimpleTimeFormat = new SimpleDateFormat(MainActivity.FORMAT_TIME_UI);
+
+        ListView lstWeights = (ListView)findViewById(R.id.main_lstWeights);
+        mWeightEntryAdapter = new WeightEntryAdapter(this, mSimpleDateFormat, mSimpleTimeFormat,
+                Helper.getColor(this, R.color.colorAccent),
+                Helper.getColor(this, R.color.colorPrimary));
+
+        lstWeights.setAdapter(mWeightEntryAdapter);
+
+        mWeightEntryAdapter.setOnLongClickListener(new WeightEntryAdapter.OnLongClickListener() {
+            @Override
+            public void onLongClick(WeightEntry item) {
+                mWeightEntryRepository.delete(item.getWeigthEntryId());
+                bindWeights();
+            }
+        });
+
+        mWeightEntryRepository = mRepositoryFactory.Create(this, WeightEntry.class);
+        bindWeights();
+    }
+
+    private void bindWeights() {
+
+        List<WeightEntry> weights = mWeightEntryRepository.get();
+        Collections.sort(weights, new Comparator<WeightEntry>() {
+            @Override
+            public int compare(WeightEntry lhs, WeightEntry rhs) {
+                return lhs.getDate().after(rhs.getDate()) ? 1 : -1;
+            }
+        });
+
+        // Should be sorted ascending
+        double previous = 0;
+        double max = Double.MIN_VALUE;
+        double min = Double.MAX_VALUE;
+        List<WeightEntryViewModel> viewModels = new ArrayList<WeightEntryViewModel>();
+        for (WeightEntry weight : weights){
+            double value = weight.getWeight();
+            boolean isRising = previous < value;
+            previous = value;
+            max = max > value ? max : value;
+            min = min < value ? min : value;
+
+            WeightEntryViewModel viewModel = new WeightEntryViewModel(weight, isRising);
+            viewModels.add(viewModel);
+        }
+
+        Collections.sort(viewModels, new Comparator<WeightEntryViewModel>() {
+            @Override
+            public int compare(WeightEntryViewModel lhs, WeightEntryViewModel rhs) {
+                return lhs.getDate().after(rhs.getDate()) ? -1 : 1;
+            }
+        });
+
         List<PointValue> yValues = new ArrayList<PointValue>();
         List<AxisValue> axisValues = new ArrayList<AxisValue>();
-        SimpleDateFormat formater = new SimpleDateFormat("MMM dd");
+        SimpleDateFormat formater = new SimpleDateFormat("d");
 
         String formattedRecordedAt;
-        Date date;
         AxisValue axisValue;
         ArrayList<Line> lines = new ArrayList<Line>();
         ArrayList<PointValue> points = new ArrayList<PointValue>();
 
-        date = new Date(Date.parse("2012/01/01 10:01"));
-        formattedRecordedAt = formater.format(date);
-        yValues.add(new PointValue(date.getTime(), 13)); //use recordedAt timestamp/day of the year number or something like that as x value
-        axisValue = new AxisValue(date.getTime());
-        axisValue.setLabel(formattedRecordedAt);
-        axisValues.add(axisValue);
-        points.add(new PointValue(date.getTime(), 13));
-
-        date = new Date(Date.parse("2012/01/01 12:01"));
-        formattedRecordedAt = formater.format(date);
-        yValues.add(new PointValue(date.getTime(), 8)); //use recordedAt timestamp/day of the year number or something like that as x value
-        axisValue = new AxisValue(date.getTime());
-        axisValue.setLabel(formattedRecordedAt);
-        axisValues.add(axisValue);
-        points.add(new PointValue(date.getTime(), 8));
-
-        date = new Date(Date.parse("2012/01/01 18:01"));
-        formattedRecordedAt = formater.format(date);
-        yValues.add(new PointValue(date.getTime(), 20)); //use recordedAt timestamp/day of the year number or something like that as x value
-        axisValue = new AxisValue(date.getTime());
-        axisValue.setLabel(formattedRecordedAt);
-        axisValues.add(axisValue);
-        points.add(new PointValue(date.getTime(), 20));
-
-        date = new Date(Date.parse("2012/01/02 18:01"));
-        formattedRecordedAt = formater.format(date);
-        yValues.add(new PointValue(date.getTime(), 15)); //use recordedAt timestamp/day of the year number or something like that as x value
-        axisValue = new AxisValue(date.getTime());
-        axisValue.setLabel(formattedRecordedAt);
-        axisValues.add(axisValue);
-        points.add(new PointValue(date.getTime(), 15));
+        for(WeightEntry weight : viewModels){
+            Date date = weight.getDate();
+            long time = date.getTime();
+            int value = (int)weight.getWeight()*100;
+            formattedRecordedAt = formater.format(date);
+            yValues.add(new PointValue(time, value));
+            axisValue = new AxisValue(time);
+            axisValue.setLabel(formattedRecordedAt);
+            axisValues.add(axisValue);
+            points.add(new PointValue(time, value));
+        }
 
         Line line = new Line(points);
+        line.setCubic(true);
+        line.setColor(Helper.getColor(this, R.color.colorAccent));
+
         lines.add(line);
         LineChartData lineChartData = new LineChartData();
         Axis axis = new Axis(axisValues);
@@ -109,16 +168,18 @@ public class MainActivity extends AppCompatActivity  {
         lineChartData.setLines(lines);
 
         mLineChart.setLineChartData(lineChartData);
+        Viewport viewport = new Viewport(mLineChart.getMaximumViewport());
+        viewport.bottom = (int)(min - 2) * 100;
+        viewport.top = (int) (max + 2) * 100;
+        mLineChart.setMaximumViewport(viewport);
+        mLineChart.setCurrentViewport(viewport);
+        mLineChart.setViewportCalculationEnabled(false);
+
         mLineChart.startDataAnimation();
-        mLineChart.invalidate();
 
-        SqliteUpdater.update(this, "db", 0, Environment.getExternalStorageDirectory() + "/weight-predictor");
-
-        mRepositoryFactory = new SqliteRepositoryFactory("db", 0, Environment.getExternalStorageDirectory() + "/weight-predictor");
-        mWeightEntryRepository = mRepositoryFactory.Create(this, WeightEntry.class);
-        List<WeightEntry> list = mWeightEntryRepository.get();
+        mWeightEntryAdapter.clear();
+        mWeightEntryAdapter.addAll(viewModels);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -163,6 +224,8 @@ public class MainActivity extends AppCompatActivity  {
                 weightEntry.setWeigthEntryId(UUID.randomUUID().toString());
 
                 mWeightEntryRepository.insert(weightEntry);
+
+                bindWeights();
 
             } catch (Exception e) {
 

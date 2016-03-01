@@ -37,6 +37,8 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 
+import app.android.weightpredictor.R;
+
 public class Helper {
 
     public static String AppRoot = Environment.getExternalStorageDirectory()
@@ -300,5 +302,14 @@ public class Helper {
         }
 
         return -1;
+    }
+
+    public static int getColor(Context context, int colorId) {
+
+        if (Build.VERSION.SDK_INT < 23) {
+            return context.getResources().getColor(colorId);
+        } else {
+            return context.getResources().getColor(R.color.colorAccent, context.getTheme());
+        }
     }
 }
